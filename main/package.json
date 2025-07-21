@@ -1,0 +1,48 @@
+{
+  "name": "main",
+  "version": "0.1.12",
+  "description": "Electron main process for Claude Code Commander",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "rimraf dist && tsc --project tsconfig.build.json && npm run copy:assets && npm run copy:scripts && npm run bundle:mcp",
+    "copy:scripts": "mkdirp dist/scripts && cp src/scripts/*.py dist/scripts/ || true",
+    "bundle:mcp": "node build-mcp-bridge.js",
+    "copy:assets": "mkdirp dist/database/migrations && cp src/database/*.sql dist/database/ && cp src/database/migrations/*.sql dist/database/migrations/",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.33",
+    "@anthropic-ai/sdk": "^0.53.0",
+    "@homebridge/node-pty-prebuilt-multiarch": "^0.12.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.45.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.45.0",
+    "@opentelemetry/sdk-node": "^0.45.0",
+    "@types/express": "^5.0.3",
+    "better-sqlite3": "^11.7.0",
+    "bull": "^4.16.3",
+    "dotenv": "^16.4.7",
+    "electron-store": "^10.0.0",
+    "electron-updater": "^6.6.2",
+    "express": "^5.1.0",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/bull": "^4.10.0",
+    "@types/glob": "^9.0.0",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
+    "electron": "^36.4.0",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "^9.17.0",
+    "mkdirp": "^3.0.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}

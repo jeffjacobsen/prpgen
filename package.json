@@ -1,0 +1,162 @@
+{
+  "name": "prpgen",
+  "version": "0.1.12",
+  "private": true,
+  "description": "PRPGen - Product Requirement Prompt and Template Manager",
+  "author": {
+    "name": "PRPGen Team",
+    "email": "contact@prpgen-dev.com"
+  },
+  "license": "MIT",
+  "main": "main/dist/index.js",
+  "engines": {
+    "node": ">=22.14.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "dev": "pnpm run electron-dev",
+    "electron-dev": "concurrently \"pnpm run --filter frontend dev\" \"wait-on http://localhost:4521 && electron .\"",
+    "electron-dev:custom": "concurrently \"pnpm run --filter frontend dev\" \"wait-on http://localhost:4521 && electron .\"",
+    "build": "pnpm run build:frontend && pnpm run build:main && pnpm run build:electron",
+    "build:frontend": "pnpm run --filter frontend build",
+    "build:main": "pnpm run --filter main build",
+    "build:electron": "electron-builder",
+    "build:mac": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --publish never",
+    "build:mac:universal": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --universal --publish never",
+    "build:mac:x64": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --x64 --publish never",
+    "build:mac:arm64": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --arm64 --publish never",
+    "build:linux": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --linux --publish never",
+    "inject-build-info": "node scripts/inject-build-info.js",
+    "release:mac": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --publish always",
+    "release:mac:universal": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --mac --universal --publish always",
+    "release:linux": "pnpm run build:frontend && pnpm run build:main && pnpm run inject-build-info && pnpm run generate-notices && electron-builder --linux --publish always",
+    "preview": "pnpm run --filter frontend preview",
+    "lint": "pnpm run -r lint",
+    "typecheck": "pnpm run -r typecheck",
+    "electron:rebuild": "cd main && electron-rebuild -f -w better-sqlite3",
+    "setup": "pnpm install && pnpm run build:main && pnpm run electron:rebuild",
+    "generate-notices": "node scripts/generate-notices.js",
+    "test": "pnpm test:unit && pnpm test:e2e",
+    "test:unit": "pnpm test:unit:backend && pnpm test:unit:frontend",
+    "test:unit:watch": "vitest --watch",
+    "test:unit:backend": "vitest --config vitest.config.backend.ts",
+    "test:unit:frontend": "vitest --config vitest.config.frontend.ts",
+    "test:security": "vitest run main/src/utils/__tests__/shellEscape.test.ts frontend/src/utils/__tests__/sanitizer.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.33",
+    "@anthropic-ai/sdk": "^0.53.0",
+    "@homebridge/node-pty-prebuilt-multiarch": "^0.12.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "better-sqlite3": "^11.7.0",
+    "bull": "^4.16.3",
+    "dotenv": "^16.4.7",
+    "electron-updater": "^6.6.2",
+    "glob": "^11.0.0",
+    "openai": "^5.1.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@vitest/coverage-v8": "^2.1.8",
+    "concurrently": "^9.1.0",
+    "electron": "^36.4.0",
+    "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
+    "jsdom": "^25.0.1",
+    "playwright": "^1.52.0",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "vitest": "^2.1.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.prpgen-dev.prpgen",
+    "productName": "PRPGen",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "main/dist/**/*",
+      "frontend/dist/**/*",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/@anthropic-ai/claude-code/vendor/**/*.jar",
+      "build/**/*",
+      "LICENSE",
+      "NOTICES"
+    ],
+    "npmRebuild": true,
+    "buildDependenciesFromSource": false,
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/**/*.node",
+      "!node_modules/@anthropic-ai/claude-code/vendor/**",
+      "main/dist/services/mcpPermissionBridge.js",
+      "main/dist/services/mcpPermissionBridgeStandalone.js",
+      "main/dist/services/**/*.js"
+    ],
+    "afterSign": "build/afterSign.js",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "main/assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "signIgnore": [
+        "node_modules/@anthropic-ai/claude-code/vendor/.*\\.jar$"
+      ],
+      "notarize": true,
+      "target": [
+        {
+          "target": "default",
+          "arch": "universal"
+        }
+      ],
+      "artifactName": "${productName}-${version}-macOS-universal.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Development",
+      "icon": "main/assets/icon.png",
+      "desktop": {
+        "Name": "Crystal",
+        "Comment": "Claude Code Commander for managing multiple Claude Code instances",
+        "Categories": "Development;IDE;",
+        "StartupWMClass": "crystal"
+      }
+    },
+    "deb": {
+      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1"],
+      "artifactName": "${productName}-${version}-linux-${arch}.deb"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    }
+  },
+  "packageManager": "pnpm@10.11.1+sha512.e519b9f7639869dc8d5c3c5dfef73b3f091094b0a006d7317353c72b124e80e1afd429732e28705ad6bfa1ee879c1fce46c128ccebd3192101f43dd67c667912"
+}
