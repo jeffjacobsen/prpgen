@@ -4,54 +4,64 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
 
-// Mock electron for tests that import it
-vi.mock('electron', () => ({
-  app: {
-    getPath: vi.fn((name: string) => `/mock/path/${name}`),
-    getAppPath: vi.fn(() => '/mock/app/path'),
-    getVersion: vi.fn(() => '1.0.0'),
-    getName: vi.fn(() => 'Crystal'),
-    isPackaged: false,
-    on: vi.fn(),
-    quit: vi.fn()
-  },
-  ipcMain: {
-    handle: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn()
-  },
-  shell: {
-    openExternal: vi.fn()
-  },
-  BrowserWindow: vi.fn(() => ({
-    loadURL: vi.fn(),
-    on: vi.fn(),
-    webContents: {
-      send: vi.fn(),
-      openDevTools: vi.fn()
+// Mock Tauri API for tests
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn((cmd: string, args?: any) => {
+    // Mock responses for different commands
+    switch (cmd) {
+      case 'get_version':
+        return Promise.resolve('0.1.12');
+      case 'get_config':
+        return Promise.resolve({ claudePath: null });
+      case 'get_all_prps':
+        return Promise.resolve([]);
+      case 'get_all_templates':
+        return Promise.resolve([]);
+      default:
+        return Promise.resolve(null);
     }
-  }))
+  })
+}));
+
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn(() => Promise.resolve(() => {}))
+}));
+
+vi.mock('@tauri-apps/api/app', () => ({
+  getVersion: vi.fn(() => Promise.resolve('0.1.12'))
+}));
+
+vi.mock('@tauri-apps/plugin-os', () => ({
+  platform: vi.fn(() => Promise.resolve('darwin'))
+}));
+
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: vi.fn(() => Promise.resolve(null))
+}));
+
+vi.mock('@tauri-apps/plugin-shell', () => ({
+  open: vi.fn(() => Promise.resolve())
 }));
 
 // Set up global test utilities
 global.testUtils = {
-  createMockSession: (overrides = {}) => ({
-    id: 'test-session-id',
-    name: 'Test Session',
-    worktreePath: '/test/worktree',
-    status: 'running',
-    pid: 12345,
-    projectId: 1,
+  createMockPRP: (overrides = {}) => ({
+    id: 1,
+    title: 'Test PRP',
+    content: 'Test content',
+    version: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides
   }),
   
-  createMockProject: (overrides = {}) => ({
+  createMockTemplate: (overrides = {}) => ({
     id: 1,
-    name: 'Test Project',
-    path: '/test/project',
-    worktreeFolder: 'worktrees',
+    title: 'Test Template',
+    content: 'Template content',
+    category: 'general',
+    tags: [],
+    isPRPTemplate: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides

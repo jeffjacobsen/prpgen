@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useIPCEvents } from './hooks/useIPCEvents';
-// Removed useNotifications - no longer needed without sessions
+// Removed useIPCEvents and useNotifications - no longer needed with Tauri
 import { useResizable } from './hooks/useResizable';
 import { Sidebar } from './components/Sidebar';
 import { PRPManagement } from './components/PRPManagement';
@@ -8,7 +7,7 @@ import { TemplateManagement } from './components/TemplateManagement';
 import Help from './components/Help';
 import Welcome from './components/Welcome';
 import { AboutDialog } from './components/AboutDialog';
-import { MainProcessLogger } from './components/MainProcessLogger';
+// Removed MainProcessLogger - no longer needed with Tauri
 import { ErrorDialog } from './components/ErrorDialog';
 import { useErrorStore } from './stores/errorStore';
 
@@ -28,8 +27,7 @@ function App() {
     storageKey: 'crystal-sidebar-width'
   });
   
-  useIPCEvents();
-  // useNotifications() - removed
+  // Removed IPC event hooks - handled by Tauri
 
   // Add keyboard shortcut to show Welcome screen
   useEffect(() => {
@@ -47,13 +45,6 @@ function App() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900">
-      <MainProcessLogger />
-      {/* Draggable title bar area */}
-      <div 
-        className="fixed top-0 left-0 right-0 h-8 z-50 flex items-center justify-end pr-4" 
-        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-      >
-      </div>
       <Sidebar 
         viewMode={viewMode} 
         onViewModeChange={setViewMode}

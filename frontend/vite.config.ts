@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 4521
+    port: 1420, // Tauri default port
+    strictPort: true,
   },
   base: './',
   build: {
@@ -12,5 +13,8 @@ export default defineConfig({
     assetsDir: 'assets',
     // Copy public files to dist
     copyPublicDir: true
-  }
+  },
+  // Tauri expects to find the app on localhost during development
+  clearScreen: false,
+  envPrefix: ['VITE_', 'TAURI_'],
 });

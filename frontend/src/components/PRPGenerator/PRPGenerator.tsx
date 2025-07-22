@@ -37,9 +37,10 @@ export function PRPGenerator({ isOpen, onClose, projectId: _projectId, initialCo
   const [templates, setTemplates] = useState<PRPTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [generationProgress, setGenerationProgress] = useState<{
-    stage: 'starting' | 'processing' | 'finalizing' | 'complete' | 'error';
+    stage: 'starting' | 'processing' | 'finalizing' | 'complete' | 'error' | 'init';
     message: string;
-    progress: number;
+    progress?: number;
+    percentage?: number;
     telemetry?: TelemetryData;
     metadata?: any;
   }>({
@@ -155,27 +156,14 @@ export function PRPGenerator({ isOpen, onClose, projectId: _projectId, initialCo
       progress: 0
     });
 
-    // Set up progress listener
+    // Set up progress listener using the API abstraction layer
     let removeListener: (() => void) | undefined;
     
-    // Check if the new event API is available
-    if (window.electronAPI.events.onPRPGenerationProgress) {
-      removeListener = window.electronAPI.events.onPRPGenerationProgress((progress) => {
-        console.log('Progress update received:', progress);
-        setGenerationProgress(progress);
-      });
-    } else if (window.electron) {
-      // Fallback to the generic event listener
-      console.log('Using fallback electron event listener');
-      const progressHandler = (progress: any) => {
-        console.log('Progress update received (fallback):', JSON.stringify(progress));
-        setGenerationProgress(progress);
-      };
-      window.electron.on('prp:generation-progress', progressHandler);
-      removeListener = () => window.electron?.off('prp:generation-progress', progressHandler);
-    } else {
-      console.error('No event listener available for PRP generation progress');
-    }
+    // Use the API abstraction layer's events module
+    removeListener = API.events.onPRPGenerationProgress((progress) => {
+      console.log('Progress update received:', progress);
+      setGenerationProgress(progress);
+    });
 
     try {
       const response = await API.prp.generateFromTemplate({
@@ -450,7 +438,7 @@ export function PRPGenerator({ isOpen, onClose, projectId: _projectId, initialCo
 
   const renderGenerating = () => {
     const getStageIcon = (stage: string, currentStage: string) => {
-      const stages = ['starting', 'processing', 'complete'];
+      const stages = ['init', 'starting', 'processing', 'complete'];
       const currentIndex = stages.indexOf(currentStage);
       const stageIndex = stages.indexOf(stage);
       
@@ -481,15 +469,14 @@ export function PRPGenerator({ isOpen, onClose, projectId: _projectId, initialCo
         {/* Status indicator - centered between title and telemetry */}
         <div className="flex justify-center mb-3">
           {(() => {
-            const activeSpansCount = generationProgress.telemetry?.traces.spans.filter(span => !span.endTime).length || 0;
-            if (activeSpansCount > 0) {
+            if (generationProgress.telemetry?.active_time_ms == 0) {
               return (
                 <span className="flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1" />
                   <span className="text-xs text-green-600 dark:text-green-400">Active</span>
                 </span>
               );
-            } else if (generationProgress.stage === 'starting') {
+            } else if (generationProgress.stage === 'starting' || generationProgress.stage === 'init') {
               return (
                 <span className="flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-1" />
@@ -528,10 +515,10 @@ export function PRPGenerator({ isOpen, onClose, projectId: _projectId, initialCo
         
         <div className="space-y-2 text-left max-w-md mx-auto">
           <div className={`flex items-center gap-2 text-sm p-2 rounded-md transition-all ${
-            generationProgress.stage === 'starting' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : ''
+            (generationProgress.stage === 'starting' || generationProgress.stage === 'init') ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : ''
           }`}>
             {getStageIcon('starting', generationProgress.stage)}
-            <span className={generationProgress.stage === 'starting' ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300'}>Initializing Claude Code</span>
+            <span className={(generationProgress.stage === 'starting' || generationProgress.stage === 'init') ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-gray-300'}>Initializing Claude Code</span>
           </div>
           <div className={`flex items-center gap-2 text-sm p-2 rounded-md transition-all ${
             generationProgress.stage === 'processing' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : ''

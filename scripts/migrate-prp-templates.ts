@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // Initialize database
-const dbPath = join(process.env.HOME || '', '.prpgen', 'sessions.db');
+const dbPath = join(process.env.HOME || '', '.prpgen', 'prpgen.db');
 const db = new DatabaseService(dbPath);
 db.initialize();
 

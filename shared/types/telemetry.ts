@@ -1,26 +1,13 @@
 export interface TelemetryData {
-  metrics: {
-    sessionCount: number;
-    linesOfCodeModified: number;
-    apiCost: number;
-    tokenUsage: {
-      input: number;
-      output: number;
-      total: number;
-    };
-    activeTimeMs: number;
-    toolDecisions: Record<string, number>;
-  };
-  traces: {
-    spans: Array<{
-      name: string;
-      startTime: string;
-      endTime?: string;
-      duration?: number;
-      attributes: Record<string, any>;
-    }>;
-  };
-  lastUpdate: string;
+  tokens_input: number;
+  tokens_output: number;
+  tokens_total: number;
+  cache_read_tokens?: number;
+  cache_creation_tokens?: number;
+  cost_usd: number;
+  tool_usage: Record<string, number>;
+  active_time_ms: number;
+  last_update?: string;
 }
 
 export interface PRPGenerationProgressWithTelemetry {

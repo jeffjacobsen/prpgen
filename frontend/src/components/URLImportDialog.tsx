@@ -94,10 +94,9 @@ export function URLImportDialog({ isOpen, onClose, onImportComplete }: URLImport
       message: 'Initializing web scraper...'
     });
 
-    // Set up progress listener
-    const unsubscribe = window.electronAPI.events.onDocumentScrapeProgress((progress: any) => {
-      setImportProgress(progress);
-    });
+    // TODO: Implement progress listener for Tauri
+    // For now, we'll use a dummy unsubscribe function
+    const unsubscribe = () => {};
 
     try {
       const response = await API.templates.scrapeUrl(url, crawlOptions);

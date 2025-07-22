@@ -33,9 +33,10 @@ export default function Welcome({ showManually, onClose }: WelcomeProps) {
       try {
         const response = await API.config.get();
         if (mounted && response.success && response.data) {
-          setClaudeExecutablePath(response.data.claudeExecutablePath || '');
+          const config = response.data as any;
+          setClaudeExecutablePath(config.claudeExecutablePath || '');
           // Auto-test Claude availability
-          const testResult = await testClaude(response.data.claudeExecutablePath);
+          const testResult = await testClaude(config.claudeExecutablePath);
           // Only show dialog if Claude is not available
           if (mounted && !testResult?.available) {
             setIsVisible(true);
@@ -76,8 +77,22 @@ export default function Welcome({ showManually, onClose }: WelcomeProps) {
     try {
       const response = await API.config.testClaude(customPath);
       if (response.success && response.data) {
-        setClaudeTestResult(response.data);
-        return response.data;
+        // Parse the test result string
+        let testData: {
+          available: boolean;
+          version?: string;
+          path?: string;
+          error?: string;
+        };
+        
+        if (typeof response.data === 'string') {
+          testData = JSON.parse(response.data);
+        } else {
+          testData = response.data as any;
+        }
+        
+        setClaudeTestResult(testData);
+        return testData;
       } else {
         const result = {
           available: false,

@@ -4,58 +4,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PRPGen (Product Requirement Prompt Generator) is an Electron desktop application for creating, managing, and generating comprehensive Product Requirement Prompts (PRPs) that guide AI-assisted development. PRPs provide structured templates and context for longer coding sessions with Claude Code.
+PRPGen (Product Requirement Prompt Generator) is a desktop application built with Tauri and React for creating, managing, and generating comprehensive Product Requirement Prompts (PRPs) that guide AI-assisted development. PRPs provide structured templates and context for longer coding sessions with Claude Code.
 
 ## Common Development Commands
 
 ```bash
-# One-time setup (install dependencies, build, and rebuild native modules)
-pnpm run setup
+# Install dependencies
+pnpm install
 
 # Run in development mode (most common)
-pnpm run dev
-# Or:
-pnpm electron-dev
+pnpm tauri dev
 
 # Build commands
-pnpm build              # Build all packages
 pnpm build:frontend     # Build frontend only
-pnpm build:main        # Build main process only
-pnpm typecheck         # Run TypeScript type checking across all packages
-pnpm lint              # Run ESLint across all packages
-
-# Testing
-pnpm test              # Run Playwright tests
-pnpm test:ui           # Run tests with UI mode
-pnpm test:headed       # Run tests in headed browser
+pnpm typecheck         # Run TypeScript type checking
+pnpm lint              # Run ESLint
+pnpm format            # Format code with Prettier
 
 # Production builds
-pnpm build:mac         # Build for macOS (universal binary)
-pnpm build:mac:x64     # Build for macOS x64 only
-pnpm build:mac:arm64   # Build for macOS ARM64 only
-pnpm build:linux       # Build for Linux (deb and AppImage)
+pnpm tauri build      # Build for current platform
 
-# If developing PRPGen with PRPGen
-# Set this as your run script in PRPGen project settings:
-pnpm run setup && PRPGEN_DIR=~/.prpgen_test pnpm electron-dev
+# Development with custom data directory
+# Useful when testing without affecting your main PRPGen data:
+PRPGEN_DIR=~/.prpgen_test pnpm tauri dev
 ```
 
 ## High-Level Architecture
 
-PRPGen uses a multi-process Electron architecture with clear separation of concerns:
+PRPGen uses Tauri's architecture with clear separation of concerns:
 
-### Process Architecture
-- **Main Process** (Electron + Node.js):
-  - SQLite database for persistent storage of PRPs and templates
-  - IPC handlers for secure communication with renderer
-  - Template management and PRP generation services
-  - Configuration management
+### Backend (Rust + Tauri)
+- **SQLite database** with sqlx for async operations
+- **Tauri commands** for secure IPC with automatic serialization
+- **Services**:
+  - `ClaudeService`: Integration with Claude CLI for PRP generation
+  - `DatabaseService`: Database management and migrations
+  - Template and PRP management
+- **OTLP Telemetry**: Built-in receiver for real-time Claude progress tracking
 
-- **Renderer Process** (React 19):
-  - React with TypeScript
-  - Tailwind CSS for styling
-  - Rich Markdown editor for PRP editing
-  - Real-time PRP generation with progress tracking
+### Frontend (React + TypeScript)
+- **React 19** with modern hooks and patterns
+- **Tailwind CSS** for responsive styling
+- **Rich Markdown Editor** with syntax highlighting
+- **Real-time Updates** via Tauri events
+- **API Abstraction Layer** for clean backend communication
 
 ### Key Architectural Patterns
 
@@ -77,14 +69,15 @@ PRPGen uses a multi-process Electron architecture with clear separation of conce
 
 The application is organized into clear modules:
 
-- **`index.ts`**: Core Electron setup and initialization
-- **`ipc/`**: IPC handlers organized by functionality
-  - `prp.ts`: PRP operations
-  - `templates.ts`: Template management
-  - `config.ts`: Configuration handlers
-  - `app.ts`: Application lifecycle
-  - `dialog.ts`: File/folder dialogs
-  - `project.ts`: Legacy project support (minimal)
+- **`src-tauri/src/main.rs`**: Core Tauri application entry point
+- **`src-tauri/src/commands/`**: Tauri commands organized by functionality
+  - `prp.rs`: PRP operations
+  - `template.rs`: Template management
+  - `config.rs`: Configuration handlers
+  - `generation.rs`: PRP generation with Claude
+- **`src-tauri/src/services/`**: Business logic services
+  - `database.rs`: SQLite database management
+  - `claude.rs`: Claude integration
 
 ### Product Requirement Prompts (PRP) System
 
@@ -128,31 +121,36 @@ Template fields for PRP templates:
 - `prerequisites`: JSON object of requirements
 - `is_prp_template`: Boolean flag for PRP templates
 
-### Migrating PRP Templates
+### Seeding Default Templates
 
 To populate the database with default PRP templates:
 
-1. Start the app in development mode: `pnpm dev`
-2. Open DevTools (Cmd+Option+I or Ctrl+Shift+I)
-3. Run the migration script from `/scripts/migrate-templates-simple.js` in the console
+1. Start the app in development mode: `pnpm tauri dev`
+2. Open Settings (gear icon in sidebar)
+3. Click "Seed Default Templates" button
 4. This will create 4 default templates: Base, React Component, Backend Service, Bug Fix
 
-## IPC Communication
+## Tauri Commands
 
-Main IPC channels:
-- `prp:*` - Product Requirement Prompt operations
-- `templates:*` - Template management
-- `config:*` - Settings and configuration
-- `app:*` - Application lifecycle
-- `dialog:*` - File/folder selection
-- `prp-generation:*` - AI-assisted PRP generation
+Main Tauri commands:
+- `get_all_prps`, `get_prp`, `create_prp`, `update_prp`, `delete_prp` - PRP operations
+- `get_all_templates`, `get_template`, `create_template`, `update_template`, `delete_template` - Template management
+- `get_prp_templates`, `seed_default_templates` - PRP template specific operations
+- `get_config`, `update_config`, `test_claude` - Configuration management
+- `generate_prp_with_claude`, `cancel_prp_generation` - AI-assisted generation
 
 Events emitted:
 - `prp-generation:progress` - Real-time PRP generation updates
 
-## Recent Changes from PRPGen
+## Migration from Electron to Tauri
 
-PRPGen is a focused rebuild of PRPGen, removing multi-session and git worktree functionality:
+PRPGen has been completely migrated from Electron to Tauri, bringing:
+- **Better Performance**: Native Rust backend instead of Node.js
+- **Smaller Bundle Size**: ~10MB vs ~100MB
+- **Enhanced Security**: No exposed Node.js APIs
+- **Native Feel**: Better OS integration
+
+The migration also focused the app on its core PRP functionality:
 
 ### Removed Features:
 - Git worktree management
@@ -180,17 +178,22 @@ PRPGen is a focused rebuild of PRPGen, removing multi-session and git worktree f
 ## Configuration
 
 PRPGen uses a simplified configuration:
-- Configuration stored in `~/.prpgen/config.json`
+- Configuration stored in app data directory:
+  - macOS: `~/Library/Application Support/com.prpgen.app/config.json`
+  - Windows: `%APPDATA%/com.prpgen.app/config.json`
+  - Linux: `~/.config/com.prpgen.app/config.json`
 - Main setting: Claude executable path
-- Database stored in `~/.prpgen/prpgen.db`
+- Database stored in same directory as `prpgen.db`
 
 ## Development Guidelines
 
 1. **Keep It Focused**: PRPGen is specifically for PRP management, avoid feature creep
 2. **Database First**: All data should be persisted in SQLite
-3. **Type Safety**: Use TypeScript strictly
+3. **Type Safety**: Use TypeScript strictly in frontend, leverage Rust's type system in backend
 4. **Error Handling**: Graceful error handling with user-friendly messages
 5. **Performance**: Keep the UI responsive during AI generation
+6. **Async Operations**: Use Rust's async/await for all database and I/O operations
+7. **Security**: Follow Tauri's security best practices, validate all IPC inputs
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

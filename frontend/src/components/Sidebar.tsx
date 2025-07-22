@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings } from './Settings';
 import crystalLogo from '../assets/crystal-logo.svg';
 import { FileText, Book } from 'lucide-react';
+import { API } from '../utils/api';
 
 type ViewMode = 'prps' | 'templates';
 
@@ -23,6 +24,15 @@ export function Sidebar({
   onShowAbout 
 }: SidebarProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>('0.0.0');
+
+  useEffect(() => {
+    API.app.getVersion().then(response => {
+      if (response.success && response.data) {
+        setAppVersion(response.data);
+      }
+    }).catch(console.error);
+  }, []);
 
   return (
     <>
@@ -118,7 +128,7 @@ export function Sidebar({
           <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               <p>PRPGen - PRP & Template Manager</p>
-              <p className="text-gray-400 dark:text-gray-500">v{window.electron?.version || '0.0.0'}</p>
+              <p className="text-gray-400 dark:text-gray-500">v{appVersion}</p>
             </div>
           </div>
         </div>

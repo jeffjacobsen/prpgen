@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 // Removed NotificationSettings - no longer needed
 // Removed useNotifications - no longer needed
-import { API } from '../utils/api';
+import { API, currentBackend } from '../utils/api';
 import type { AppConfig } from '../types/config';
 // Removed unused imports
 
@@ -22,6 +22,8 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
     error?: string;
   } | null>(null);
   const [isTestingClaude, setIsTestingClaude] = useState(false);
+  const [seedResult, setSeedResult] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -33,7 +35,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
     try {
       const response = await API.config.get();
       if (!response.success) throw new Error(response.error || 'Failed to fetch config');
-      const data = response.data;
+      const data = response.data as AppConfig;
       setConfig(data);
       setClaudeExecutablePath(data.claudeExecutablePath || '');
     } catch (err) {
@@ -48,7 +50,18 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
     try {
       const response = await API.config.testClaude(customPath);
       if (response.success && response.data) {
-        setClaudeTestResult(response.data);
+        // Parse the test result string
+        if (typeof response.data === 'string') {
+          const testData = JSON.parse(response.data) as {
+            available: boolean;
+            version?: string;
+            path?: string;
+            error?: string;
+          };
+          setClaudeTestResult(testData);
+        } else {
+          setClaudeTestResult(response.data as any);
+        }
       } else {
         setClaudeTestResult({
           available: false,
@@ -65,6 +78,24 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
     }
   };
 
+  const seedTemplates = async () => {
+    setIsSeeding(true);
+    setSeedResult(null);
+    
+    try {
+      const result = await API.templates.seedDefaultTemplates();
+      if (result.success && result.data) {
+        setSeedResult(result.data);
+      } else {
+        setSeedResult(result.error || 'Failed to seed templates');
+      }
+    } catch (err) {
+      setSeedResult(err instanceof Error ? err.message : 'Failed to seed templates');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -72,7 +103,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
 
     try {
       const response = await API.config.update({ 
-        claudeExecutablePath,
+        claude_executable_path: claudeExecutablePath,
       });
 
       if (!response.success) {
@@ -144,7 +175,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               </button>
               <button
                 type="button"
-                onClick={() => testClaude(claudeExecutablePath)}
+                onClick={() => testClaude(claudeExecutablePath.trim() || undefined)}
                 disabled={isTestingClaude}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -185,7 +216,38 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
             )}
           </div>
 
-
+          {/* Template Seeding (Tauri only) */}
+          {currentBackend === 'tauri' && (
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+                Template Management
+              </h3>
+              <div>
+                <button
+                  type="button"
+                  onClick={seedTemplates}
+                  disabled={isSeeding}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSeeding ? 'Seeding...' : 'Seed Default Templates'}
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Populate the database with default PRP templates. This is safe to run multiple times.
+                </p>
+                {seedResult && (
+                  <div className={`mt-2 p-3 rounded-md text-sm ${
+                    seedResult.includes('Successfully') 
+                      ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800' 
+                      : 'bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800'
+                  }`}>
+                    <div className={seedResult.includes('Successfully') ? 'text-green-800 dark:text-green-200' : 'text-yellow-800 dark:text-yellow-200'}>
+                      {seedResult}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="text-red-600 text-sm">{error}</div>

@@ -1,211 +1,127 @@
-# PRPGen ICE - Integrated Context Engineering
+# PRPGen - Product Requirement Prompt Generator
 
-> **Note**: PRPGen ICE is an enhanced fork of PRPGen that adds Integrated Context Engineering through Product Requirement Prompts (PRPs), web documentation scraping, and structured AI-assisted development. Test users should follow the instructions below to run from source.
+PRPGen is a desktop application built with Tauri for creating, managing, and generating comprehensive Product Requirement Prompts (PRPs) that guide AI-assisted development with Claude Code.
 
-## 🚀 Quick Start for Test Users
+## Features
 
-### Prerequisites
-- Node.js 18+ and pnpm installed
-- Claude Code CLI installed and logged in
-- Git installed
-- Python 3.8+ (for web scraping functionality)
-- crawl4ai package: `pip install crawl4ai==0.7.0`
-
-### Running from Source
-
-```bash
-# Clone the enhanced fork
-git clone https://github.com/jeffjacobsen/prpgen.git
-cd prpgen
-
-# Checkout the PRP-enhanced branch
-git checkout feature/prp-enhanced
-
-# Install dependencies and build
-pnpm run setup
-
-# Run in development mode
-pnpm run dev
-```
-
-### What Makes PRPGen ICE Different?
-
-PRPGen ICE (Integrated Context Engineering) enhances the original PRPGen with powerful context management features:
-
-- **Product Requirement Prompts (PRPs)**: Structured templates for AI-assisted development
-- **AI-Powered PRP Generation**: Use Claude Code to generate PRPs from templates
-- **Web Documentation Import**: Scrape and import documentation from URLs with intelligent crawling
-- **Context-First Design**: Documents and PRPs exist independently of projects
-- **Streamlined Workflow**: Integrated PRP selection in session creation
-- **Progressive Disclosure**: Step-by-step interfaces for complex operations
-
-For detailed documentation about our enhancements, see the `/docs` directory:
-- `docs/ADAPTATION_PLAN.md` - Original vision and implementation roadmap
-- `docs/PROGRESS_SUMMARY.md` - Detailed list of all changes and enhancements
-- `docs/PRP-TEMPLATE-SYSTEM.md` - Complete PRP template system documentation
-
-**Notes: If you encounter Python-related errors during setup check https://github.com/stravu/prpgen/commit/f8fc298ca00b27b954f163e65544375806532d87
-
+- 📝 **PRP Templates**: Pre-built templates for common development patterns
+- 🤖 **AI-Assisted Generation**: Generate PRPs from feature descriptions using Claude
+- 📚 **Template Library**: Database-stored templates with categories and metadata
+- ✏️ **Rich Markdown Editor**: Edit PRPs with live preview
+- 📊 **Real-time Progress**: Track PRP generation progress with telemetry
+- 🔄 **Version Control**: Track changes to PRPs over time
+- 🎯 **Smart Path Detection**: Automatically finds Claude installation
 
 ## Installation
 
-### Download Pre-built Binaries
+### Prerequisites
 
-Pre-built binaries are not yet available for this enhanced fork. Please run from source as shown above.
+- Node.js 18 or higher
+- pnpm 8+ package manager
+- Rust and Cargo (latest stable)
+- Claude Code CLI (optional - for AI-powered PRP generation)
 
-
-## 🧪 Testing
-
-PRPGen uses Vitest for unit testing and Playwright for E2E testing. The test suite includes critical security tests for XSS prevention and command injection protection.
-
-### Running Tests
-
-```bash
-# Run all tests (unit + E2E)
-pnpm test
-
-# Run unit tests only
-pnpm test:unit
-
-# Run unit tests in watch mode (auto-reruns on file changes)
-pnpm test:unit:watch
-
-# Run security tests only (shellEscape + sanitizer)
-pnpm test:security
-
-# Run tests with coverage report
-pnpm test:coverage
-
-# Run E2E tests
-pnpm test:e2e
-
-# Run E2E tests with UI
-pnpm test:e2e:ui
-```
-
-### Running Specific Tests
-
-```bash
-# Run a single test file
-pnpm test:unit main/src/utils/__tests__/shellEscape.test.ts
-
-# Run tests matching a pattern
-pnpm test:unit -t security
-
-# Run all tests in a specific directory
-pnpm test:unit main/src/utils/__tests__
-```
-
-### Test Coverage
-
-The test suite covers:
-- ✅ **Security utilities** - Command injection and XSS prevention (48 tests)
-- ✅ **PRP system** - Template loading, parsing, and generation (8 tests)
-- ✅ **Git operations** - Worktree management and git commands (17 tests)
-- ✅ **Session management** - Complete session lifecycle (28 tests)
-- ✅ **Template system** - PRP template loading and management (10 tests)
-- ✅ **Frontend components** - UI components and user interactions (99 tests)
-
-**Current Status**: 210 total tests with 100% backend test coverage (89/89 passing)
-
-
-------------------------------------------------
-
-## Original PRPGen Overview
-
-PRPGen is an Electron desktop application that lets you run, inspect, and test multiple Claude Code instances simultaneously using git worktrees. It provides structured development with Product Requirement Prompts (PRPs) that guide AI-assisted development for longer coding sessions.
-
-
-## The PRPGen Workflow
-
-1. Create sessions from prompts, each in an isolated git worktree
-2. Iterate with Claude Code inside your sessions. Each iteration will make a commit so you can always go back.
-3. Review the diff changes and make manual edits as needed
-4. Squash your commits together with a new message and rebase to your main branch.
-
-## ✨ Key Features
-
-- **🚀 Parallel Sessions** - Run multiple Claude Code instances at once
-- **🌳 Git Worktree Isolation** - Each session gets its own branch
-- **💾 Session Persistence** - Resume conversations anytime
-- **🔧 Git Integration** - Built-in rebase and squash operations
-- **📊 Change Tracking** - View diffs and track modifications
-- **🔔 Notifications** - Desktop alerts when sessions need input
-- **🏗️ Run Scripts** - Test changes instantly without leaving PRPGen
-- **📋 Product Requirement Prompts** - Structured development with AI-assisted PRP generation
-- **🎯 Focused Workflow** - Streamlined session creation with PRP integration
-- **🌐 Web Scraping** - Import documentation directly from URLs with intelligent crawling
-- **📄 Document Management** - Create and manage documents independently of projects
-
-## 🚀 Quick Start
-
-## Building from Source
+### Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/stravu/prpgen.git
+git clone https://github.com/YOUR_USERNAME/prpgen.git
 cd prpgen
 
-# One-time setup
-pnpm run setup
+# Install dependencies
+pnpm install
 
-# Run in development
-pnpm run electron-dev
+# Run in development mode
+pnpm tauri dev
 ```
 
-## Building for Production
+### Building
 
 ```bash
-# Build for macOS
-pnpm build:mac
+# Build for current platform
+pnpm tauri build
+
+# Build frontend only
+pnpm build:frontend
 ```
 
-### Prerequisites
-- Claude Code installed and logged in
-- Git installed
-- Git repository (PRPGen will initialize one if needed)
+## Usage
 
-### 1. Create a Project
-Create a new project if you haven't already. This can be an empty folder or an existing git repository. PRPGen will initialize git if needed.
+1. **Launch PRPGen**: Start the application
+2. **Configure Claude** (optional): Go to Settings to set Claude path if not auto-detected
+3. **Browse Templates**: Navigate to the Templates section
+4. **Generate PRP**: Click "Generate PRP" button
+5. **Select Template**: Choose from Base, React Component, Backend Service, or Bug Fix templates
+6. **Input Requirements**: Provide your feature description and optional codebase path
+7. **Generate**: Let Claude create a comprehensive PRP (or get a mock PRP if Claude isn't available)
+8. **Edit & Save**: Review the generated PRP and save to your library
 
-### 2. Create Sessions from a Prompt
-For any feature you're working on, create one or multiple new sessions:
-- Each session will be an isolated git worktree
-- Optionally select a Product Requirement Prompt (PRP) to guide development
-- PRPs can be generated with AI assistance using Claude Code
+## Configuration
 
-### 3. Monitor and Test Your Changes
-As sessions complete:
-- **Configure run scripts** in project settings to test your application without leaving PRPGen
-- **Use the diff viewer** to review all changes and make manual edits as needed
-- **Continue conversations** with Claude Code if you need additional changes
+PRPGen stores its configuration and data in platform-specific locations:
 
-### 4. Finalize Your Changes
-When everything looks good:
-- Click **"Rebase to main"** to squash all commits with a new message and rebase them to your main branch
-- This creates a clean commit history on your main branch
+### macOS
+- Config: `~/Library/Application Support/com.prpgen.app/config.json`
+- Database: `~/Library/Application Support/com.prpgen.app/prpgen.db`
 
-### Git Operations
-- **Rebase from main**: Pull latest changes from main into your worktree
-- **Squash and rebase to main**: Combine all commits and rebase onto main
-- Always preview commands with tooltips before executing
+### Windows
+- Config: `%APPDATA%/com.prpgen.app/config.json`
+- Database: `%APPDATA%/com.prpgen.app/prpgen.db`
 
+### Linux
+- Config: `~/.config/com.prpgen.app/config.json`
+- Database: `~/.config/com.prpgen.app/prpgen.db`
 
-## 🤝 Contributing
+The only configuration option is the path to your Claude executable (automatically detected in most cases).
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Developing PRPGen with PRPGen
-
-If you're using PRPGen to develop PRPGen itself, you need to use a separate data directory to avoid conflicts with your main PRPGen instance:
+## Development
 
 ```bash
-# Set the run script in your PRPGen project settings to:
-pnpm run setup && pnpm run build:main && CRYSTAL_DIR=~/.prpgen_test pnpm electron-dev
+# Run development server
+pnpm tauri dev
+
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
+
+# Format code
+pnpm format
+
+# Build for production
+pnpm tauri build
 ```
 
-This ensures:
-- Your development PRPGen instance uses `~/.prpgen_test` for its data
-- Your main PRPGen instance continues using `~/.prpgen` 
-- Worktrees won't conflict between the two instances
-- You can safely test changes without affecting your primary PRPGen setup
+## Default Templates
+
+PRPGen comes with four default PRP templates:
+
+1. **Base PRP Template** - General-purpose template for any feature development
+2. **React Component PRP** - Specialized for React component development
+3. **Backend Service PRP** - For backend API and service development
+4. **Bug Fix PRP** - For documenting and fixing bugs
+
+To seed these templates, click "Seed Default Templates" in the Settings dialog.
+
+## Architecture
+
+PRPGen is built with modern web technologies:
+
+- **Frontend**: React 19 with TypeScript and Tailwind CSS
+- **Backend**: Rust with Tauri framework
+- **Database**: SQLite with sqlx (Rust async driver)
+- **IPC**: Type-safe Tauri commands with automatic serialization
+- **Telemetry**: Built-in OTLP receiver for real-time Claude progress tracking
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## Credits
+
+PRPGen is a focused rebuild inspired by Crystal, concentrating specifically on PRP management functionality.

@@ -1,9 +1,9 @@
 # PRPGen Database Documentation
 
 ## Database Location
-The SQLite database is stored at: `~/.prpgen/sessions.db`
+The SQLite database is stored at: `~/.prpgen/prpgen.db`
 
-On macOS, this expands to: `/Users/[your-username]/.prpgen/sessions.db`
+On macOS, this expands to: `/Users/[your-username]/.prpgen/prpgen.db`
 
 ## Database Schema Overview
 
@@ -100,7 +100,7 @@ The database contains the following tables organized by functionality:
 
 ```bash
 # Connect to database
-sqlite3 ~/.prpgen/sessions.db
+sqlite3 ~/.prpgen/prpgen.db
 
 # Once connected:
 .tables                    # List all tables
@@ -216,24 +216,24 @@ It's recommended to periodically backup your database:
 
 ```bash
 # Create backup
-cp ~/.prpgen/sessions.db ~/.prpgen/sessions_backup_$(date +%Y%m%d).db
+cp ~/.prpgen/prpgen.db ~/.prpgen/prpgen_backup_$(date +%Y%m%d).db
 
 # Create compressed backup
-sqlite3 ~/.prpgen/sessions.db ".backup ~/.prpgen/sessions_backup.db"
-gzip ~/.prpgen/sessions_backup.db
+sqlite3 ~/.prpgen/prpgen.db ".backup ~/.prpgen/prpgen_backup.db"
+gzip ~/.prpgen/prpgen_backup.db
 ```
 
 ## Database Maintenance
 
 ```bash
 # Vacuum database (reclaim space and optimize)
-sqlite3 ~/.prpgen/sessions.db "VACUUM;"
+sqlite3 ~/.prpgen/prpgen.db "VACUUM;"
 
 # Analyze database (update statistics for query optimizer)
-sqlite3 ~/.prpgen/sessions.db "ANALYZE;"
+sqlite3 ~/.prpgen/prpgen.db "ANALYZE;"
 
 # Check database integrity
-sqlite3 ~/.prpgen/sessions.db "PRAGMA integrity_check;"
+sqlite3 ~/.prpgen/prpgen.db "PRAGMA integrity_check;"
 ```
 
 ## Schema Migrations

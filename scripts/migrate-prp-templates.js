@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Initialize database
-const dbPath = path.join(process.env.HOME || '', '.prpgen', 'sessions.db');
+const dbPath = path.join(process.env.HOME || '', '.prpgen', 'prpgen.db');
 console.log('Database path:', dbPath);
 
 const db = new Database(dbPath);

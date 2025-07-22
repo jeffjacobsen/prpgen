@@ -1,6 +1,18 @@
-// Utility for making API calls using Electron IPC
+/**
+ * API utility that wraps Tauri API calls with consistent error handling
+ */
 
-// Type for IPC response
+import { 
+  prpApi, 
+  templateApi, 
+  configApi, 
+  dialogApi, 
+  events, 
+  appApi,
+  currentBackend 
+} from '../lib/api';
+
+// Response interface for consistent API responses
 export interface IPCResponse<T = any> {
   success: boolean;
   data?: T;
@@ -8,213 +20,170 @@ export interface IPCResponse<T = any> {
   details?: string;
 }
 
-// Check if we're running in Electron
-const isElectron = () => {
-  return typeof window !== 'undefined' && window.electronAPI;
-};
+// Helper function to wrap API calls with error handling
+async function wrapApiCall<T>(apiCall: Promise<T>): Promise<IPCResponse<T>> {
+  try {
+    const data = await apiCall;
+    return { success: true, data };
+  } catch (error: any) {
+    return { 
+      success: false, 
+      error: error.message || 'An error occurred',
+      details: error.stack
+    };
+  }
+}
 
 // Wrapper class for API calls that provides error handling and consistent interface
 export class API {
   // Template management (formerly documents)
   static templates = {
-    async getAll() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:get-all');
+    async getAll(): Promise<IPCResponse<any[]>> {
+      return wrapApiCall(templateApi.getAll());
     },
 
-    async get(templateId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:get', templateId);
+    async get(templateId: number): Promise<IPCResponse<any>> {
+      return wrapApiCall(templateApi.get(templateId));
     },
 
-    async create(template: { title: string; content: string; category?: string; tags?: string[]; file_path?: string; url?: string }) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:create', template.title, template.content, template.category, template.tags, template.file_path, template.url);
+    async create(template: { title: string; content: string; category?: string; tags?: string[]; file_path?: string; url?: string }): Promise<IPCResponse<any>> {
+      return wrapApiCall(templateApi.create(template));
     },
 
-    async update(templateId: number, updates: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:update', templateId, updates);
+    async update(templateId: number, updates: any): Promise<IPCResponse<any>> {
+      return wrapApiCall(templateApi.update(templateId, updates));
     },
 
-    async delete(templateId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:delete', templateId);
+    async delete(templateId: number): Promise<IPCResponse<void>> {
+      return wrapApiCall(templateApi.delete(templateId)) as Promise<IPCResponse<void>>;
     },
 
-    async search(query: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:search', query);
+    async search(query: string): Promise<IPCResponse<any[]>> {
+      return wrapApiCall(templateApi.search(query)) as Promise<IPCResponse<any[]>>;
     },
 
-    async scrapeUrl(url: string, options?: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:scrape-url', url, options);
+    async scrapeUrl(_url: string, _options?: any): Promise<IPCResponse<any>> {
+      return { 
+        success: false, 
+        error: 'URL scraping not yet implemented in Tauri' 
+      };
     },
 
-    async getPRPTemplates() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:get-prp-templates');
+    async getPRPTemplates(): Promise<IPCResponse<any[]>> {
+      return wrapApiCall(templateApi.getPRPTemplates());
     },
 
-    async createPRPTemplate(template: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('templates:create-prp-template', template);
+    async createPRPTemplate(template: any): Promise<IPCResponse<any>> {
+      return wrapApiCall(templateApi.createPRPTemplate(template));
+    },
+
+    async seedDefaultTemplates(): Promise<IPCResponse<string>> {
+      return wrapApiCall(templateApi.seedDefaultTemplates());
     }
   };
 
-  // Product Requirement Prompts
+  // PRP management
   static prp = {
-    async get(prpId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:get', prpId);
+    async getAll(): Promise<IPCResponse<any[]>> {
+      return wrapApiCall(prpApi.getAll());
     },
 
-    async getAll() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:get-all');
+    async get(prpId: number): Promise<IPCResponse<any>> {
+      return wrapApiCall(prpApi.get(prpId));
     },
 
-    async create(title: string, content: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:create', title, content);
+    async create(title: string, content: string): Promise<IPCResponse<any>> {
+      return wrapApiCall(prpApi.create(title, content));
     },
 
-    async update(prpId: number, title: string, content: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:update', prpId, title, content);
+    async update(prpId: number, title: string, content: string): Promise<IPCResponse<any>> {
+      return wrapApiCall(prpApi.update(prpId, title, content));
     },
 
-    async delete(prpId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:delete', prpId);
+    async delete(prpId: number): Promise<IPCResponse<void>> {
+      return wrapApiCall(prpApi.delete(prpId)) as Promise<IPCResponse<void>>;
     },
 
-    async generateFromTemplate(request: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:generate-from-template', request);
+    async generateFromTemplate(request: any): Promise<IPCResponse<any>> {
+      return wrapApiCall(prpApi.generateFromTemplate(request));
     },
 
-    async cancelGeneration() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:cancel-generation');
+    async cancelGeneration(): Promise<IPCResponse<void>> {
+      return wrapApiCall(prpApi.cancelGeneration()) as Promise<IPCResponse<void>>;
     },
 
-    async getTemplates() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:get-templates');
-    },
-
-    async validateTemplate(templatePath: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:validate-template', templatePath);
-    },
-
-    async reloadTemplates(customPaths?: string[]) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:reload-templates', customPaths);
-    },
-
-    async getVersions(prpId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('prp:get-versions', prpId);
-    }
-  };
-
-  // Project management
-  static projects = {
-    async getAll() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:get-all');
-    },
-
-    async get(projectId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:get', projectId);
-    },
-
-    async create(name: string, path: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:create', name, path);
-    },
-
-    async update(projectId: number, updates: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:update', projectId, updates);
-    },
-
-    async delete(projectId: number) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:delete', projectId);
-    },
-
-    async reorder(projectIds: number[]) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('projects:reorder', projectIds);
+    async getTemplates(): Promise<IPCResponse<any[]>> {
+      return API.templates.getPRPTemplates();
     }
   };
 
   // Configuration
   static config = {
-    async get() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('config:get');
+    async get(): Promise<IPCResponse<any>> {
+      return wrapApiCall(configApi.get());
     },
 
-    async update(updates: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('config:update', updates);
+    async update(updates: any): Promise<IPCResponse<any>> {
+      return wrapApiCall(configApi.update(updates));
     },
 
-    async getVersion() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('app:version');
-    },
-
-    async testClaude(customPath?: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('config:test-claude', customPath);
+    async testClaude(customPath?: string): Promise<IPCResponse<string>> {
+      return wrapApiCall(configApi.testClaude(customPath)) as Promise<IPCResponse<string>>;
     }
   };
 
-  // App utilities
-  static app = {
-    async openExternal(url: string) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('app:open-external', url);
-    },
-
-    async toggleDevTools() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('app:toggle-dev-tools');
-    },
-
-    async quit() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('app:quit');
-    }
-  };
-
-  // Dialog utilities
+  // Dialog
   static dialog = {
-    async selectDirectory() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('dialog:select-directory');
+    async openFile(options?: any): Promise<IPCResponse<string | null>> {
+      return wrapApiCall(dialogApi.openFile(options));
     },
 
-    async openDirectory() {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('dialog:select-directory');
-    },
-
-    async selectFile(options?: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('dialog:select-file', options);
-    },
-
-    async openFile(options?: any) {
-      if (!isElectron()) throw new Error('Electron API not available');
-      return window.electronAPI.invoke('dialog:select-file', options);
+    async openDirectory(options?: any): Promise<IPCResponse<string | null>> {
+      return wrapApiCall(dialogApi.openDirectory(options));
     }
   };
+
+  // App info
+  static app = {
+    async getVersion(): Promise<IPCResponse<string>> {
+      return wrapApiCall(appApi.getVersion());
+    },
+
+    async getPlatform(): Promise<IPCResponse<string>> {
+      return wrapApiCall(appApi.getPlatform());
+    },
+
+    async getState(): Promise<IPCResponse<never>> {
+      return { 
+        success: false, 
+        error: 'App state not available in Tauri' 
+      };
+    },
+
+    async openSettings(): Promise<IPCResponse<never>> {
+      return { 
+        success: false, 
+        error: 'Settings dialog not available in Tauri' 
+      };
+    },
+
+    async openExternal(url: string): Promise<IPCResponse<void>> {
+      try {
+        const { open } = await import('@tauri-apps/plugin-shell');
+        await open(url);
+        return { success: true };
+      } catch (error: any) {
+        return { 
+          success: false, 
+          error: error.message || 'Failed to open external URL' 
+        };
+      }
+    }
+  };
+
+  // Events
+  static events = events;
 }
+
+// Export individual APIs for direct use
+export { prpApi, templateApi, configApi, dialogApi, events, appApi, currentBackend };
